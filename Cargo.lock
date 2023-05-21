@@ -482,7 +482,7 @@ dependencies = [
  "stdweb",
  "thiserror",
  "web-sys",
- "windows",
+ "windows 0.37.0",
 ]
 
 [[package]]
@@ -496,9 +496,9 @@ dependencies = [
 
 [[package]]
 name = "crevice"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a843181f42b85f7b5c7742c95aeff6f3a35416d8e760158e219c6bb993248d3"
+checksum = "cb3faad1502613f2bbc3825b9e96d7d604eec2716c4723903d1ad31139d8f05c"
 dependencies = [
  "bytemuck",
  "crevice-derive",
@@ -879,9 +879,9 @@ dependencies = [
 
 [[package]]
 name = "ggez"
-version = "0.8.1"
+version = "0.9.0-rc0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b5afdff588614f146cddaabe68ee21de08947594c7a7329aad0a0563f848552"
+checksum = "ac20a944681a67abf2651a11e08c047500720af26c5e99899e099ad6503ce4b0"
 dependencies = [
  "approx",
  "bitflags",
@@ -894,7 +894,7 @@ dependencies = [
  "image",
  "log",
  "lyon",
- "memoffset 0.7.1",
+ "memoffset 0.8.0",
  "mint",
  "ordered-float",
  "pollster",
@@ -921,9 +921,9 @@ dependencies = [
 
 [[package]]
 name = "gilrs"
-version = "0.9.0"
+version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d6ba7c37bf8ea7ba0c3e3795dfa1a7771b1e47c4bb417c4d27c7b338d79685f"
+checksum = "62fd19844d0eb919aca41d3e4ea0e0b6bf60e1e827558b101c269015b8f5f27a"
 dependencies = [
  "fnv",
  "gilrs-core",
@@ -934,9 +934,9 @@ dependencies = [
 
 [[package]]
 name = "gilrs-core"
-version = "0.4.1"
+version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96a8d94a7fc5afd27e894e08a4cfe5a49237f85bcc7140e90721bad3399c7d02"
+checksum = "fd745b0cb1a207756e8fabacf5623066ad6aa543ea0be4bab34e897e6bbe24f9"
 dependencies = [
  "core-foundation",
  "io-kit-sys",
@@ -944,20 +944,19 @@ dependencies = [
  "libc",
  "libudev-sys",
  "log",
- "nix 0.24.3",
- "rusty-xinput",
+ "nix 0.26.2",
  "uuid",
  "vec_map",
  "wasm-bindgen",
  "web-sys",
- "winapi",
+ "windows 0.48.0",
 ]
 
 [[package]]
 name = "glam"
-version = "0.21.3"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "518faa5064866338b013ff9b2350dc318e14cc4fcd6cb8206d7e7c9886c98815"
+checksum = "12f597d56c1bd55a811a1be189459e8fad2bbc272616375602443bdfb37fa774"
 dependencies = [
  "mint",
 ]
@@ -1139,12 +1138,12 @@ dependencies = [
 
 [[package]]
 name = "io-kit-sys"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7789f7f3c9686f96164f5109d69152de759e76e284f736bd57661c6df5091919"
+checksum = "9b2d4429acc1deff0fbdece0325b4997bdb02b2c245ab7023fd5deca0f6348de"
 dependencies = [
  "core-foundation-sys",
- "mach",
+ "mach2",
 ]
 
 [[package]]
@@ -1387,6 +1386,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mach2"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d0d1830bcd151a6fc4aea1369af235b36c1528fe976b8ff678683c9995eade8"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "malloc_buf"
 version = "0.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1402,6 +1410,8 @@ dependencies = [
  "ggez",
  "keyframe",
  "keyframe_derive",
+ "num-derive",
+ "num-traits",
 ]
 
 [[package]]
@@ -1424,15 +1434,6 @@ name = "memoffset"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5aa361d4faea93603064a027415f07bd8e1d5c88c9fbf68bf56a285428fd79ce"
-dependencies = [
- "autocfg",
-]
-
-[[package]]
-name = "memoffset"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5de893c32cde5f383baa4c04c5d6dbdd735cfd4a794b0debdb2bb1b421da5ff4"
 dependencies = [
  "autocfg",
 ]
@@ -1650,6 +1651,18 @@ dependencies = [
  "cfg-if",
  "libc",
  "memoffset 0.6.5",
+]
+
+[[package]]
+name = "nix"
+version = "0.26.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfdda3d196821d6af13126e40375cdf7da646a96114af134d5f417a9a1dc8e1a"
+dependencies = [
+ "bitflags",
+ "cfg-if",
+ "libc",
+ "static_assertions",
 ]
 
 [[package]]
@@ -2084,17 +2097,6 @@ dependencies = [
  "libc",
  "linux-raw-sys",
  "windows-sys 0.48.0",
-]
-
-[[package]]
-name = "rusty-xinput"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2aa654bc32eb9ca14cce1a084abc9dfe43949a4547c35269a094c39272db3bb"
-dependencies = [
- "lazy_static",
- "log",
- "winapi",
 ]
 
 [[package]]
@@ -2906,6 +2908,15 @@ dependencies = [
  "windows_i686_msvc 0.37.0",
  "windows_x86_64_gnu 0.37.0",
  "windows_x86_64_msvc 0.37.0",
+]
+
+[[package]]
+name = "windows"
+version = "0.48.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e686886bc078bc1b0b600cac0147aadb815089b6e4da64016cbd754b6342700f"
+dependencies = [
+ "windows-targets 0.48.0",
 ]
 
 [[package]]

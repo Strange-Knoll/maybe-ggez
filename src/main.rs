@@ -9,7 +9,10 @@
 //  x86_64 GNU/Linux
 //
 
-#![allow(dead_code, unused_variables, unused_imports)]
+//#![allow(dead_code, unused_variables, unused_imports)]
+
+
+
 use std::{path::{PathBuf, self}, fs, io::Read, env, fmt::format};
 use core::slice::Iter;
 use std::fmt::Write;
@@ -22,16 +25,13 @@ use ggez::{
         Image, 
         self, 
         Color, 
-        Mesh, 
-        MeshBuilder,
-        MeshData, DrawMode, Rect, DrawParam
+        DrawMode, 
+        Rect, 
+        DrawParam
     }, 
     glam::Vec2, 
-    conf};
+    conf, timer::{TimeContext, self}};
 use ggez::event;
-use keyframe::{ease, functions::*, keyframes, AnimationSequence, EasingFunction};
-use keyframe_derive::CanTween;
-
 
 fn main() {
     // set resouce dir (target/debug/resources) or (target/release/resources)
@@ -57,118 +57,28 @@ fn main() {
 }
 
 
-#[derive(CanTween, Clone, Copy)]
-/// necessary because we can't implement CanTween for graphics::Rect directly, as it's a foreign type
-struct TweenableRect {
-    x: f32,
-    y: f32,
-    w: f32,
-    h: f32,
-}
-
-impl TweenableRect {
-    fn new(x: f32, y: f32, w: f32, h: f32) -> Self {
-        TweenableRect { x, y, w, h }
+// assumes a fixed frame rate
+// return some iterator of frames
+fn sprite_anim(
+    rows:f32, cols:f32, 
+    first_last:(f32, f32),
+    col_indx:f32,
+) -> Vec<Rect> {
+    println!("spite_anim()");
+    let w:f32 = 1.0/rows;
+    let h:f32 = 1.0/cols;
+    let x:f32 = w;
+    let y:f32 = col_indx*h;
+    println!("x:{}, y:{}, w:{}, h{}", x,y,w,h);
+    let length = (first_last.1 - first_last.0).floor() as i32;
+    println!("length:{}", length);
+    let mut out = Vec::<Rect>::new();
+    for f in 1..length{
+        let frame = f as f32 * (first_last.0+1.0);
+        println!("frame:{}",frame);
+        out.push(Rect{x:x*frame, y:y, w:w, h:h});
     }
-}
-
-impl From<TweenableRect> for graphics::Rect {
-    fn from(t_rect: TweenableRect) -> Self {
-        graphics::Rect {
-            x: t_rect.x,
-            y: t_rect.y,
-            w: t_rect.w,
-            h: t_rect.h,
-        }
-    }
-}
-
-/// A fancy easing function, tweening something into one of `frames` many discrete states.
-/// The `pre_easing` is applied first, thereby making other `EasingFunction`s usable in the realm of frame-by-frame animation
-struct AnimationFloor {
-    pre_easing: Box<dyn EasingFunction + Send + Sync>,
-    frames: i32,
-}
-impl EasingFunction for AnimationFloor {
-    #[inline]
-    fn y(&self, x: f64) -> f64 {
-        (self.pre_easing.y(x) * (self.frames) as f64).floor() / (self.frames - 1) as f64
-    }
-}
-
-fn player_sequence(
-    ease_enum: &EasingEnum,
-    anim_type: &AnimationType,
-    size:(usize, usize),        //width and hight of the sprite frame
-    col_row: (usize, usize),    //rows (frames) of the animation and 
-                                //cols(animations) in the spritesheet
-    first_last:(usize, usize),  //the first and last index of frames taken from spritesheet
-    index: usize,               //which animation (col) in sprite sheet we want to play
-    duration:f32
-) -> AnimationSequence<TweenableRect> {
-    // create the two Rects that will serve as `from` and `to` for the DrawParam::src of the animation
-    // the start for all animations is at the leftmost frame, starting at 0.0
-    let src_x_start: f32 = 0.0;
-    // the final parameter depends upon how many frames there are in an animation
-    let src_x_end = col_row.0;
-    // the src.y parameter depends on the row in which the animation is placed inside the sprite sheet
-    let src_y = col_row.1;
-    // the height and width of the source rect are the proportions of a frame relative towards the whole sprite sheet
-    let w = 1.0 / col_row.0 as f32;
-    let h = 1.0 / col_row.1 as f32;
-    let src_rect_start = TweenableRect::new(src_x_start*first_last.0, src_y, w, h);
-    let src_end_rect = TweenableRect::new(src_x_end*first_last.1, src_y, w, h);
-
-    let frames = first_last.1-first_last.0;
-
-    if let EasingEnum::EaseInOut3Point = ease_enum {
-        // first calculate the middle state of this sequence
-        // luckily we can use keyframe to help us with that
-        let mid = ease(
-            AnimationFloor {
-                pre_easing: Box::new(Linear),
-                frames,
-            },
-            src_rect_start,
-            src_end_rect,
-            0.33,
-        );
-        let mid_frames = (frames as f32 * 0.33).floor() as i32;
-        // we need to adapt the frame count for each keyframe
-        // only the frames that are to be played until the next keyframe count
-        keyframes![
-            (
-                src_rect_start,
-                0.0,
-                AnimationFloor {
-                    pre_easing: Box::new(EaseInOut),
-                    frames: mid_frames + 1
-                }
-            ),
-            (
-                mid,
-                0.66 * duration,
-                AnimationFloor {
-                    pre_easing: Box::new(EaseInOut),
-                    frames: frames - mid_frames
-                }
-            ),
-            (src_end_rect, duration)
-        ]
-    } else {
-        // the simpler case: choose some easing function as the pre-easing of an AnimationFloor
-        // which operates on all frames, from the first to the last
-        let easing = AnimationFloor {
-            pre_easing: easing_function(ease_enum),
-            frames,
-        };
-        keyframes![
-            (src_rect_start, 0.0, easing),
-            (src_end_rect, duration) // we don't need to specify a second easing function,
-                                     // since this sequence won't be reversed, leading to
-                                     // it never being used anyway
-        ]
-    }
+    return out;
 }
 
 // load file from bytes (credit: Bowarc)
@@ -191,8 +101,8 @@ fn load_file(p: &str) -> Option<Vec<u8>>{
     let _bytes_read = file.read_to_end(&mut bytes);
     
     // <DEBUG>
-    println!("DUMP IMG BYTES ...");
-    println!("{}", _bytes_read.unwrap());
+    //println!("DUMP IMG BYTES ...");
+    //println!("{}", _bytes_read.unwrap());
     //<BoilerPlate>
     //constructs printable string of hex values
     let mut s = String::new();
@@ -202,7 +112,7 @@ fn load_file(p: &str) -> Option<Vec<u8>>{
     //</BoilerPlate>
 
     // dump bytes to console
-    println!("{}", s);
+    //println!("{}", s);
     // </DEBUG>
     
     Some(bytes) // return some bytes :p
@@ -211,7 +121,9 @@ fn load_file(p: &str) -> Option<Vec<u8>>{
 struct Dungeon{
     sprite_sheet:Image, 
     sprite:Image,
-    player_animation:AnimationSequence<TweenableRect>,
+    player_animation:Vec<Rect>,
+    time:TimeContext,
+    tick:usize
 }
 
 impl Dungeon{
@@ -242,39 +154,58 @@ impl Dungeon{
         return Dungeon{
             sprite_sheet:sheet,
             sprite:img,
-            player_animation:player_sequence(&EasingEnum::Linear, &AnimationType::Idle, 1.0)
+            player_animation:
+                sprite_anim(23.0, 4.0, (0.0,5.0), 1.0),
+            time:TimeContext::new(),
+            tick:0
         }
     }
 }
 
-impl EventHandler for Dungeon{
-    fn update(&mut self, _ctx: &mut Context) -> Result<(), GameError> {
 
+
+
+impl EventHandler for Dungeon{
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
+        let secs = ctx.time.delta().as_secs_f64();
+        // advance the ball animation and reverse it once it reaches its end
+        //self.ball_animation.advance_and_maybe_reverse(secs);
+        // advance the player animation and wrap around back to the beginning once it reaches its end
+        while(timer::check_update_time(ctx, 8)){
+            println!("Tick: {}", self.tick);
+            self.tick+=1;
+        }
+        
         Ok(())
     }
+    
 
     fn draw(&mut self, ctx: &mut Context) -> Result<(), GameError> {
         // base canvas
         let mut canvas = graphics::Canvas::from_frame(&ctx.gfx, Color::BLACK);
+        canvas.set_sampler(graphics::Sampler::nearest_clamp()); // because pixel art
 
         //transform
         let dest = Vec2::new(256.0,256.0);
         //draw our sprite
         canvas.draw(
+            
             &self.sprite.clone(), 
             graphics::DrawParam::new()
-                .scale(Vec2::new(1.0, 1.0))
-                .dest(dest)
+                .scale(Vec2::new(0.5, 0.5))
+                .dest([20.0,20.0])
                 .z(0)
         );
 
         // draw the player
-        let current_frame_src: graphics::Rect = self.player_animation.now_strict().unwrap().into();
+        let current_frame_src = self.player_animation.get(
+            self.tick % self.player_animation.len()
+        ).unwrap(); 
         let scale = 3.0;
         canvas.draw(
             &self.sprite_sheet,
             graphics::DrawParam::new()
-                .src(current_frame_src)
+                .src(current_frame_src.clone())
                 .scale([scale, scale])
                 .dest([470.0, 460.0])
                 .offset([0.5, 1.0]),
