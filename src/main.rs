@@ -31,9 +31,9 @@ use ggez::{
 use ggez::event;
 
 mod image_loader;
-use image_loader::*;
+use image_loader::load_file;
 mod animated_sprite;
-use animated_sprite::*;
+use animated_sprite::{AnimatedSprite, SpriteSheet};
 
 
 fn main() {
@@ -62,43 +62,39 @@ fn main() {
 
 
 struct Dungeon{
-    sprite_sheet:Image, 
-    sprite:Image,
-    player_animation:Vec<Rect>,
+    sprite_sheet:SpriteSheet, 
+    player_animation:AnimatedSprite,
     time:TimeContext,
     tick:usize
 }
 
 impl Dungeon{
     fn new(ctx: &mut Context) -> Dungeon{
-        //build path
-        let path = format!("{}/{}", 
-            ctx.fs.resources_dir().display(),
-            "Icon.1_04.png"
-        );
-        //debug path
-        println!("loaded path: {}", path);
-        //load bytes from file at path
-        let bytes = load_file(path.as_str());
+        
         //creates an image from loaded bytes
-        let img = Image::from_bytes(&ctx.gfx, &bytes.unwrap()).unwrap();
+        /*
+        * still bugged in 0.9.0 rc 
+        * let img = Image::from_path(ctx, path.as_str()).unwrap();
+        */
 
-        let sheet_bytes = load_file(
-            format!("{}/{}",
-                ctx.fs.resources_dir().display(),
-                "dva/tentai/missionary_face_fuck/full.png"
-            ).as_str()
-        );
-        let sheet = Image::from_bytes(
-            &ctx.gfx, &sheet_bytes.unwrap())
-            .unwrap();
+
+        let dva_sprite = SpriteSheet::new(ctx,
+            "dva/tentai/missionary_tits_fuck/full.png".to_string(),
+            6,1);
+            
+        let dva_anim = AnimatedSprite::new(
+            dva_sprite.clone(), 0, 0, 6)
+            .transform(
+                [0.0, 0.0].into(), 
+                [0.0, 0.0].into(),
+                [8.0, 8.0].into(), 
+                0
+            );
 
         //returns dungeon with our image as sprite
         return Dungeon{
-            sprite_sheet:sheet,
-            sprite:img,
-            player_animation:
-                sprite_animation(6.0, 1.0, (0.0,6.0), 0.0),
+            sprite_sheet:dva_sprite,
+            player_animation:dva_anim,
             time:TimeContext::new(),
             tick:0
         }
@@ -110,14 +106,7 @@ impl Dungeon{
 
 impl EventHandler for Dungeon{
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        let secs = ctx.time.delta().as_secs_f64();
-        // advance the ball animation and reverse it once it reaches its end
-        //self.ball_animation.advance_and_maybe_reverse(secs);
-        // advance the player animation and wrap around back to the beginning once it reaches its end
-        while(timer::check_update_time(ctx, 8)){
-            println!("Tick: {}", self.tick);
-            self.tick+=1;
-        }
+        self.player_animation.update(ctx, 8).unwrap();
         
         Ok(())
     }
@@ -125,34 +114,16 @@ impl EventHandler for Dungeon{
 
     fn draw(&mut self, ctx: &mut Context) -> Result<(), GameError> {
         // base canvas
-        let mut canvas = graphics::Canvas::from_frame(&ctx.gfx, Color::BLACK);
+        let color = Color::new(0.0,0.0,0.0,0.0);
+        let mut canvas = graphics::Canvas::from_frame(&ctx.gfx, Color::BLUE);
         canvas.set_sampler(graphics::Sampler::nearest_clamp()); // because pixel art
-
-
-        //draw our sprite
-        canvas.draw(
-            
-            &self.sprite.clone(), 
-            graphics::DrawParam::new()
-                .scale([0.25, 0.25])
-                .dest([20.0,20.0])
-                .z(-1)
-        );
-
-        // draw the player
-        let current_frame_src = self.player_animation.get(
-            self.tick % self.player_animation.len()
-        ).unwrap(); 
-        let scale = 8.0;
-        canvas.draw(
-            &self.sprite_sheet,
-            graphics::DrawParam::new()
-                .src(current_frame_src.clone())
-                .scale([scale, scale])
-                .dest([16.0*scale, 16.0*scale])
-                .offset([0.5, 0.5])
-                .z(5),
-        );
+        self.player_animation
+            /*.transform(
+                [128.0,256.0].into(), 
+                [0.5,0.5].into(), 
+                [8.0,8.0].into(), 
+                5 )*/
+            .draw(ctx, &mut canvas); 
 
 
         canvas.finish(&mut ctx.gfx)?;
