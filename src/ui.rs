@@ -23,14 +23,13 @@ pub struct Stroke{
     color:Color,
     width:f32
 }
+
 impl Stroke{
     pub fn new()->Self{
         Stroke { 
             color: Color { 
-                r: 0.0, 
-                g: 0.0, 
-                b: 0.0, 
-                a: 0.0 
+                r: 0.0, g: 0.0, 
+                b: 0.0, a: 0.0 
             }, 
             width: 0.0 
         }
@@ -45,6 +44,8 @@ impl Stroke{
     }
 
 }
+
+//style is used to define how a panel is drawn
 #[derive(Clone)]
 pub struct Style{
     fg:Color,
@@ -53,7 +54,6 @@ pub struct Style{
     radius:f32,
     margin:f32,
     padding:f32
-
 }
 
 impl Style{
@@ -96,13 +96,13 @@ impl Style{
 }
 
 
+//panels hold and transform the meshes that get drawn to the screen
 #[derive(Clone)]
 pub struct Panel{
     rect:Rect,
     style:Style,
     fill:Mesh,
     stroke:Mesh,
-
 }
 
 
@@ -166,6 +166,9 @@ impl Drawable for Panel{
     }
 }
 
+
+// containers hold Panels (and text eventually) and
+// handle layout and drawing its panel
 #[derive(Clone)]
 pub struct Container{
     children:Vec<Container>,
@@ -200,6 +203,9 @@ impl Container {
         return self;
     }
 
+    // BUG: seems to revolve around here,
+    // is intended to draw a panel that fills the screen
+    // ... it does not
     pub fn full_screen(ctx:&mut Context) -> Container{
         let bind = Container::new(ctx, 
             Rect::new(0.0,0.0,

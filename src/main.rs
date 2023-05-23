@@ -65,21 +65,17 @@ struct Dungeon{
 
 impl Dungeon{
     fn new(ctx: &mut Context) -> Dungeon{
-        
-        //creates an image from loaded bytes
-        /*
-        * still bugged in 0.9.0 rc 
-        * let img = Image::from_path(ctx, path.as_str()).unwrap();
-        */
 
-        let dva_string = "dva/tentai/missionary_tits_fuck/full.png".to_string();
+        // building character sprite
         let character_string = "characters_7.png".to_string();
-        let dva_sprite = SpriteSheet::new(ctx,
-            character_string,
-            23,4);
-            
-        let dva_anim = AnimatedSprite::new(
-            dva_sprite.clone(), 0, 14, 18);
+        
+        let character_sprite = SpriteSheet::new(ctx,
+            character_string,23,4);
+
+        let character_anim = AnimatedSprite::new(
+            character_sprite.clone(), 0, 14, 18);
+
+        // build style for fullscreen ui container
         let mut style_binding = Style::new();
         let style = style_binding
             .fg(Color::WHITE)
@@ -93,27 +89,32 @@ impl Dungeon{
                     .clone()
             );
         
+        //build fullscreen container
         let mut fullscreen_rect_binding = Container::full_screen(ctx);
         let fullscreen_rect = fullscreen_rect_binding
             .style(style.clone())
             .get_panel();
        
-        let mut panel_stroke_binding = Stroke::new();
+        //stroke for panel
+        let mut panel_stroke_binding = Stroke::new();   // theres a lot of these bindings
+                                                        // im not really sure what this is doing
+                                                        // just following the compilers wisdom   
         let panel_stroke = panel_stroke_binding
             .color(Color::RED)
             .width(8.0);
-        
+        //style for panel
         let mut panel_style_binding = Style::new();
         let panel_style = panel_style_binding
             .bg(Color::BLUE)
             .stroke(panel_stroke.clone())
             .radius(24.0);
+        //panel
         let panel = Panel::new(ctx, 
             &mut Rect::new(100.0,100.0, 200.0, 200.0), panel_style.clone());
         //returns dungeon with our image as sprite
         return Dungeon{
-            sprite_sheet:dva_sprite,
-            player_animation:dva_anim,
+            sprite_sheet:character_sprite,
+            player_animation:character_anim,
             time:TimeContext::new(),
             tick:0,
             panel:panel,
@@ -127,6 +128,7 @@ impl Dungeon{
 
 impl EventHandler for Dungeon{
     fn update(&mut self, ctx: &mut Context) -> GameResult {
+        // animate player sprite
         self.player_animation.update(ctx, 8).unwrap();
         
         Ok(())
@@ -138,6 +140,9 @@ impl EventHandler for Dungeon{
         let mut canvas = graphics::Canvas::from_frame(&ctx.gfx, Color::BLACK);
 
         canvas.set_sampler(graphics::Sampler::nearest_clamp()); // because pixel art
+        
+        //player has not been implimented with Drawable
+        //hence the reaso we call the players draw
         self.player_animation.draw(
             &mut canvas,
             DrawParam::new()
@@ -145,16 +150,9 @@ impl EventHandler for Dungeon{
                 .scale([4.0,4.0])
                 .dest([400.0,400.0])
         ); 
-        /*self.ui.draw(
-            &mut canvas, 
-            DrawParam::new()
-                .offset([0.0,0.0])
-                .scale([1.0,1.0])
-                .z(-5)
-        );
-        self.panel.draw(&mut canvas, DrawParam::new());
-        */
-
+        
+        //content and panel both have Drawable implimented
+        //so we call them with canvas.draw
         canvas.draw(&self.ui, DrawParam::new());
         canvas.draw(&self.panel, DrawParam::new());
         canvas.finish(&mut ctx.gfx)?;
