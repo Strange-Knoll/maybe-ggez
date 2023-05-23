@@ -145,7 +145,7 @@ impl EventHandler for Dungeon{
                 .scale([4.0,4.0])
                 .dest([400.0,400.0])
         ); 
-        self.ui.draw(
+        /*self.ui.draw(
             &mut canvas, 
             DrawParam::new()
                 .offset([0.0,0.0])
@@ -153,7 +153,10 @@ impl EventHandler for Dungeon{
                 .z(-5)
         );
         self.panel.draw(&mut canvas, DrawParam::new());
+        */
 
+        canvas.draw(&self.ui, DrawParam::new());
+        canvas.draw(&self.panel, DrawParam::new());
         canvas.finish(&mut ctx.gfx)?;
 
         Ok(())

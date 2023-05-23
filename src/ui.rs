@@ -146,11 +146,23 @@ impl Panel {
         return Panel { rect:*rect, style, fill, stroke };
     }
 
-    pub fn draw(&self, canvas:&mut Canvas, draw_param:DrawParam){
+    /*pub fn draw(&self, canvas:&mut Canvas, draw_param:DrawParam){
         //canvas.set_sampler(graphics::Sampler::linear_clamp());
         canvas.draw(&self.fill, draw_param);
         canvas.draw(&self.stroke, draw_param);
         //println!("Panel.draw()");
+    }*/
+}
+
+impl Drawable for Panel{
+    fn draw(&self, canvas: &mut Canvas, param: impl Into<DrawParam>) {
+        let mut param_binding = DrawParam::new();
+        param_binding = param.into();
+        canvas.draw(&self.fill, param_binding);
+        canvas.draw(&self.stroke, param_binding); 
+    }
+    fn dimensions(&self, gfx: &impl ggez::context::Has<graphics::GraphicsContext>) -> Option<Rect> {
+        return Some(self.rect);
     }
 }
 
@@ -169,12 +181,12 @@ impl Container {
             panel:Panel::new(ctx,&mut rect, style) 
         };
     }
-    pub fn draw(&self, canvas:&mut Canvas, draw_param:DrawParam){
+    /*pub fn draw(&self, canvas:&mut Canvas, draw_param:DrawParam){
         //println!("Container.draw()");
         //self.panel.draw(canvas, draw_param);
         self.get_panel().fill.draw(canvas, draw_param);
         self.get_panel().stroke.draw(canvas, draw_param);
-    }
+    }*/
     pub fn add_child(&mut self, c:Container) -> &Self{
         self.children.push(c);
         return self;
@@ -199,6 +211,15 @@ impl Container {
     }
     pub fn get_panel(&self) -> &Panel{
         return &self.panel;
+    }
+}
+
+impl Drawable for Container{
+    fn draw(&self, canvas: &mut Canvas, param: impl Into<DrawParam>) {
+        canvas.draw(&self.panel, param);
+    }
+    fn dimensions(&self, gfx: &impl ggez::context::Has<graphics::GraphicsContext>) -> Option<Rect> {
+        return Some(self.panel.rect);
     }
 }
 
