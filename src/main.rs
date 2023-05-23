@@ -1,13 +1,4 @@
-//This exampe should draw an image on the screen. SHOULD.
-//so far i have been unable to achieve this behavior on
-//my machine. 
-//
-//::SYS INFO::
-//uname -a
-//  Linux knoll 5.19.0-41-generic 
-//  #42~22.04.1-Ubuntu 
-//  x86_64 GNU/Linux
-//
+
 
 #![allow(dead_code, /*unused_variables,*/ unused_imports)]
 use std::{path::{PathBuf, self}, fs, io::Read, env, fmt::format};
@@ -24,7 +15,7 @@ use ggez::{
         Color, 
         DrawMode, 
         Rect, 
-        DrawParam
+        DrawParam, Mesh, MeshBuilder, MeshData
     }, 
     glam::Vec2, 
     conf, timer::{TimeContext, self}};
@@ -34,6 +25,8 @@ mod image_loader;
 use image_loader::load_file;
 mod animated_sprite;
 use animated_sprite::{AnimatedSprite, SpriteSheet};
+mod ui;
+use ui::*;
 
 
 fn main() {
@@ -65,7 +58,9 @@ struct Dungeon{
     sprite_sheet:SpriteSheet, 
     player_animation:AnimatedSprite,
     time:TimeContext,
-    tick:usize
+    tick:usize,
+    panel:Panel,
+    ui:Panel
 }
 
 impl Dungeon{
@@ -77,26 +72,52 @@ impl Dungeon{
         * let img = Image::from_path(ctx, path.as_str()).unwrap();
         */
 
-
+        let dva_string = "dva/tentai/missionary_tits_fuck/full.png".to_string();
+        let character_string = "characters_7.png".to_string();
         let dva_sprite = SpriteSheet::new(ctx,
-            "dva/tentai/missionary_tits_fuck/full.png".to_string(),
-            6,1);
+            character_string,
+            23,4);
             
         let dva_anim = AnimatedSprite::new(
-            dva_sprite.clone(), 0, 0, 6)
-            .transform(
-                [0.0, 0.0].into(), 
-                [0.0, 0.0].into(),
-                [8.0, 8.0].into(), 
-                0
+            dva_sprite.clone(), 0, 14, 18);
+        let mut style_binding = Style::new();
+        let style = style_binding
+            .fg(Color::WHITE)
+            .bg(Color::RED)
+            .radius(8.0)
+            .padding(16.0)
+            .stroke(
+                Stroke::new()
+                    .color(Color::WHITE)
+                    .width(2.0)
+                    .clone()
             );
-
+        
+        let mut fullscreen_rect_binding = Container::full_screen(ctx);
+        let fullscreen_rect = fullscreen_rect_binding
+            .style(style.clone())
+            .get_panel();
+       
+        let mut panel_stroke_binding = Stroke::new();
+        let panel_stroke = panel_stroke_binding
+            .color(Color::RED)
+            .width(8.0);
+        
+        let mut panel_style_binding = Style::new();
+        let panel_style = panel_style_binding
+            .bg(Color::BLUE)
+            .stroke(panel_stroke.clone())
+            .radius(24.0);
+        let panel = Panel::new(ctx, 
+            &mut Rect::new(100.0,100.0, 200.0, 200.0), panel_style.clone());
         //returns dungeon with our image as sprite
         return Dungeon{
             sprite_sheet:dva_sprite,
             player_animation:dva_anim,
             time:TimeContext::new(),
-            tick:0
+            tick:0,
+            panel:panel,
+            ui:fullscreen_rect.clone()
         }
     }
 }
@@ -114,17 +135,24 @@ impl EventHandler for Dungeon{
 
     fn draw(&mut self, ctx: &mut Context) -> Result<(), GameError> {
         // base canvas
-        let color = Color::new(0.0,0.0,0.0,0.0);
-        let mut canvas = graphics::Canvas::from_frame(&ctx.gfx, Color::BLUE);
-        canvas.set_sampler(graphics::Sampler::nearest_clamp()); // because pixel art
-        self.player_animation
-            /*.transform(
-                [128.0,256.0].into(), 
-                [0.5,0.5].into(), 
-                [8.0,8.0].into(), 
-                5 )*/
-            .draw(ctx, &mut canvas); 
+        let mut canvas = graphics::Canvas::from_frame(&ctx.gfx, Color::BLACK);
 
+        canvas.set_sampler(graphics::Sampler::nearest_clamp()); // because pixel art
+        self.player_animation.draw(
+            &mut canvas,
+            DrawParam::new()
+                .offset([0.5,0.5])
+                .scale([4.0,4.0])
+                .dest([400.0,400.0])
+        ); 
+        self.ui.draw(
+            &mut canvas, 
+            DrawParam::new()
+                .offset([0.0,0.0])
+                .scale([1.0,1.0])
+                .z(-5)
+        );
+        self.panel.draw(&mut canvas, DrawParam::new());
 
         canvas.finish(&mut ctx.gfx)?;
 

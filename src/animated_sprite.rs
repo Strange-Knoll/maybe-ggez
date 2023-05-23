@@ -21,7 +21,7 @@ use crate::image_loader;
 //will work as intended reguardless of image path
 //provided the path shares the same qualities ad the
 //animation defined though the arguements.
-fn sprite_animation( // <-- rename this 
+fn sprite_animation(
     rows:f32, cols:f32, 
     first_last:(f32, f32),
     col_indx:f32,
@@ -79,7 +79,6 @@ pub struct AnimatedSprite{
     first_frame:i32,
     last_frame:i32,
     tick:i32,
-    transform:transform
 
 }
 
@@ -98,11 +97,7 @@ impl AnimatedSprite {
             first_frame: first, 
             last_frame: last,
             tick:0,
-            transform:transform { 
-                dest: [0.0,0.0].into(), 
-                offset: [0.0,0.0].into(), 
-                scale: [0.0, 0.0].into(), 
-                z: 0 }
+
         };
     }
     pub fn sprite_sheet(&self) -> Image{
@@ -111,20 +106,7 @@ impl AnimatedSprite {
     pub fn get_frames(&self) -> Vec<Rect>{
         return self.anim.clone();
     }
-    pub fn transform(&mut self,
-        dest: Vec2,
-        offset: Vec2,
-        scale: Vec2,
-        z: i32,
-    ) -> Self{
-        self.transform = transform{
-            dest:dest.into(),
-            offset:offset.into(),
-            scale:scale.into(),
-            z:z
-        };
-        return self.to_owned();
-    }
+
 }
 
 impl AnimatedSprite{
@@ -137,10 +119,9 @@ impl AnimatedSprite{
     }
 
     pub fn draw(&mut self, 
-        ctx: &mut ggez::Context, 
-        canvas: &mut Canvas
+        canvas: &mut Canvas, draw_param:DrawParam
     ) {
-        canvas.set_sampler(Sampler::nearest_clamp()); // because pixel art
+        //canvas.set_sampler(Sampler::nearest_clamp()); // because pixel art
         
         // draw the player
         let current_frame_src = self.anim.get(
@@ -149,12 +130,8 @@ impl AnimatedSprite{
 
         canvas.draw(
             &self.sprite_sheet.image,
-            graphics::DrawParam::new()
-                .src(current_frame_src.clone())
-                .scale(self.transform.scale)
-                .dest(self.transform.dest)
-                .offset(self.transform.offset)
-                .z(5)
+            draw_param.src(current_frame_src.clone())
+
             )
     }
 }
